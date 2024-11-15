@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wayback Machine Extractor with Timeout</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    input, select, button {
+      margin: 5px;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Wayback Machine URL and Subdomain Extractor with Timeout</h1>
+  <label for="domain">Domain:</label>
+  <input type="text" id="domain" placeholder="Enter domain (e.g. target.com)" required>
+  <br>
+  <label for="option">Choose Output Type:</label>
+  <select id="option">
+    <option value="0">URLs and Subdomains</option>
+    <option value="1">URLs Only</option>
+    <option value="2">Subdomains Only</option>
+  </select>
+  <br>
+  <label for="timeout">Timeout (seconds):</label>
+  <input type="number" id="timeout" value="600" min="1">
+  <br>
+  <button onclick="fetchData()">Fetch Data</button>
+
+  <script>
+    async function fetchData() {
+      const domain = document.getElementById('domain').value.trim();
+      const option = document.getElementById('option').value;
+      const timeout = parseInt(document.getElementById('timeout').value) * 1000; // Convert seconds to milliseconds
+
+      if (!domain) {
+        alert('Please enter a valid domain!');
+        return;
+      }
+
+      const url = `http://web.archive.org/cdx/search/cdx?url=*.${
+        domain
+      }/*&output=text&fl=original&collapse=urlkey`;
+
+      // Create an AbortController to handle the timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout); // Abort after the timeout period
+
+      try {
+        const response = await fetch(url, { signal: controller.signal });
+        const data = await response.text();
+
+        const urls = data.split('\n').filter(line => line.length > 0);
+        const subdomains = new Set();
+
+        // Extract subdomains
+        urls.forEach(url => {
+          const match = url.match(/https?:\/\/([^/]+)/);
+          if (match && match[1]) {
+            subdomains.add(match[1]);
+          }
+        });
+
+        // Prepare the results based on the option
+        let result = '';
+        if (option === '0') {
+          // Option 0: Both URLs and Subdomains
+          result += 'URLs\n' + urls.join('\n') + '\n\n';
+          result += 'Subdomains\n' + Array.from(subdomains).join('\n');
+        } else if (option === '1') {
+          // Option 1: URLs Only
+          result += 'URLs\n' + urls.join('\n');
+        } else if (option === '2') {
+          // Option 2: Subdomains Only
+          result += 'Subdomains\n' + Array.from(subdomains).join('\n');
+        }
+
+        // Create CSV data
+        const csvData = convertToCSV(result);
+
+        // Trigger download of the CSV file
+        downloadCSV(csvData, domain);
+
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          alert('The request timed out after the specified time limit.');
+        } else {
+          console.error('Error occurred:', error);
+          alert('An error occurred while fetching data.');
+        }
+      } finally {
+        clearTimeout(timeoutId); // Clear the timeout
+      }
+    }
+
+    // Convert string data to CSV format
+    function convertToCSV(data) {
+      const rows = data.split('\n').map(row => row.split(',').map(cell => `"${cell}"`).join(','));
+      return rows.join('\n');
+    }
+
+    // Function to download the CSV file
+    function downloadCSV(csvData, domain) {
+      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${domain}-wayback-result.csv`;
+      link.click();
+    }
+  </script>
+</body>
+</html>
