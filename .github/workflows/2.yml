@@ -1,0 +1,49 @@
+name: Scrape Wayback Machine and Extract Subdomains with Timeframe Support
+
+on:
+  workflow_dispatch:
+    inputs:
+      website_url:
+        description: 'The website URL to scrape'
+        required: true
+        type: string
+      time_limit:
+        description: 'Timeout in seconds for fetching URLs'
+        required: false
+        default: 600
+        type: integer
+      start_time:
+        description: 'Start year for the timeframe'
+        required: false
+        type: integer
+      end_time:
+        description: 'End year for the timeframe'
+        required: false
+        type: integer
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install dependencies (Node.js)
+        run: |
+          npm install axios
+
+      - name: Run JavaScript Script to Fetch Subdomains and URLs
+        run: |
+          node server.js ${{ github.event.inputs.website_url }} ${{ github.event.inputs.time_limit }} ${{ github.event.inputs.start_time }} ${{ github.event.inputs.end_time }}
+
+      - name: Upload Result Files
+        uses: actions/upload-artifact@v3
+        with:
+          name: wayback-archive-results
+          path: ./wayback-urls-*.out
+          retention-days: 7
