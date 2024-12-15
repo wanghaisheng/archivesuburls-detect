@@ -39,7 +39,7 @@ jobs:
 
       - name: Run JavaScript Script to Fetch Subdomains and URLs
         run: |
-          node server.js ${{ github.event.inputs.website_url }} ${{ github.event.inputs.time_limit }} ${{ github.event.inputs.start_time }} ${{ github.event.inputs.end_time }}
+           node server.js ${{ github.event.inputs.website_url }} ${{ github.event.inputs.time_limit }} ${{ github.event.inputs.start_time }} ${{ github.event.inputs.end_time }}
 
       - name: Upload Result Files
         uses: actions/upload-artifact@v3
