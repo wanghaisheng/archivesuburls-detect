@@ -34,7 +34,7 @@ jobs:
 
       - name: Run Wayback Scraper
         run: |
-          python wayback_scraper.py
+          python main.py
         env:
           INPUT_WEBSITE_URL: ${{ github.event.inputs.website_url }}
           INPUT_FROM_DATE: ${{ github.event.inputs.from_date }}
