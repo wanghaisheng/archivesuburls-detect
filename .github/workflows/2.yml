@@ -42,7 +42,7 @@ jobs:
            node server.js ${{ github.event.inputs.website_url }} ${{ github.event.inputs.time_limit }} ${{ github.event.inputs.start_time }} ${{ github.event.inputs.end_time }}
 
       - name: Upload Result Files
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wayback-archive-results
           path: ./wayback-urls-*.out
